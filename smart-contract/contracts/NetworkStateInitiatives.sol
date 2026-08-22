@@ -56,6 +56,7 @@ contract NetworkStateInitiatives is ReentrancyGuard {
     event EmergencyWithdrawal(address owner, uint256 amount);
     event NetworkStateTreasuryUpdated(address newReceiver, uint256 timestamp);
     event AgreementContractUpdated(address newAgreementContract);
+    event InstigatorAssigned(bytes32 initiativeId, address instigator);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this");
@@ -138,6 +139,9 @@ contract NetworkStateInitiatives is ReentrancyGuard {
         initiatives[initiativeIndex].upvotes += _votesNumber;
         userCredits[msg.sender] -= creditCost;
         hasVoted[msg.sender][_initiativeId] = true;
+        
+        _checkAndAssignInstigator(initiativeIndex);
+        
         emit Upvoted(_initiativeId, msg.sender, _votesNumber);
     }
 
@@ -159,9 +163,6 @@ contract NetworkStateInitiatives is ReentrancyGuard {
         require(isValidStatus(_newStatus), "Invalid status");
         uint256 initiativeIndex = _requireInitiative(_initiativeId);
         initiatives[initiativeIndex].status = _newStatus;
-        if (initiatives[initiativeIndex].upvotes >= initiatives[initiativeIndex].downvotes + 5) {
-            initiatives[initiativeIndex].instigator = msg.sender;
-        }
         emit StatusUpdated(_initiativeId, _newStatus, block.timestamp);
     }
 
@@ -264,5 +265,14 @@ contract NetworkStateInitiatives is ReentrancyGuard {
             }
         }
         revert("Initiative not found");
+    }
+    
+    function _checkAndAssignInstigator(uint256 _initiativeIndex) internal {
+        if (initiatives[_initiativeIndex].instigator == address(0) && 
+            initiatives[_initiativeIndex].upvotes >= initiatives[_initiativeIndex].downvotes + 5) {
+            
+            initiatives[_initiativeIndex].instigator = initiatives[_initiativeIndex].ideator;
+            emit InstigatorAssigned(initiatives[_initiativeIndex].id, initiatives[_initiativeIndex].ideator);
+        }
     }
 }
