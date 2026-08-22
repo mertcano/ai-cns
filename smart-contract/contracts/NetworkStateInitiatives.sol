@@ -4,7 +4,8 @@ pragma solidity ^0.8.19;
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 interface INetworkStateAgreement {
-    function hasAgreed(address _user) external view returns (bool);
+    function hasAgreed(address _user) external view returns (bool) {
+    return userInformation[_user].hasAgreed;
 }
 
 contract NetworkStateInitiatives is ReentrancyGuard {
